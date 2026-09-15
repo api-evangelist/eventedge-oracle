@@ -1,0 +1,48 @@
+name: EventEdge Oracle
+description: >-
+  Read-only, machine-readable prediction-market context (Polymarket + Kalshi) built for autonomous AI agents. Provides
+  decision-support data only (no trade execution), accessed via the x402 pay-per-request payment protocol (USDC on
+  Base). Exposes a REST API, a live MCP server, and advertised OpenAPI/llms.txt surfaces.
+url: https://raw.githubusercontent.com/api-evangelist/eventedge-oracle/refs/heads/main/apis.yml
+created: '2026-09-15'
+modified: '2026-09-15'
+specificationVersion: '0.21'
+tags:
+  - prediction-markets
+  - x402
+  - ai-agents
+  - polymarket
+  - kalshi
+  - market-context
+  - decision-support
+  - finance
+apis:
+  - name: EventEdge Oracle Agent Context API
+    description: >-
+      Read-only REST API providing compact market context, topic-specific context, and richer decision-support context
+      for AI agents. Payment-gated via x402 (USDC on Base); no API key or signup. Also exposes a live MCP server with
+      catalog and teasers tools.
+    humanURL: https://edge.arakelproof.space
+    baseURL: https://edge.arakelproof.space
+    tags:
+      - prediction-markets
+      - x402
+      - ai-agents
+      - polymarket
+      - kalshi
+      - market-context
+      - decision-support
+      - finance
+    properties:
+      - type: MCPServer
+        url: https://edge.arakelproof.space/mcp
+      - type: Documentation
+        url: https://edge.arakelproof.space
+maintainers:
+  - FN: EventEdge Oracle
+    url: https://edge.arakelproof.space
+generated:
+  by: apis.io/add
+  model: claude-opus-4-8
+  confidence: 80
+  at: '2026-09-15T10:25:45.583Z'
