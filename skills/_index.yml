@@ -1,0 +1,19 @@
+generated: '2026-09-15'
+method: generated
+source: openapi/eventedge-oracle-openapi.json
+api: EventEdge Oracle Agent Context API
+note: >-
+  Packaged agent skills grounded in real EventEdge operationIds. Provider publishes no
+  skills/AGENTS.md (advertised /skill.md returns 404), so these are generated from the
+  live OpenAPI.
+skills:
+  - id: eventedge-decision-context
+    file: eventedge-oracle-decision-context.md
+    operations:
+      - agentDecisionContext
+      - agentMarketContext
+  - id: eventedge-cross-market-check
+    file: eventedge-oracle-cross-market-check.md
+    operations:
+      - crossMarketTopicCheck
+      - predictionMarketChangeWatch

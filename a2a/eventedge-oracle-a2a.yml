@@ -1,0 +1,42 @@
+generated: '2026-09-15'
+method: probed
+source: https://edge.arakelproof.space/.well-known/agent-card.json
+card: a2a/eventedge-oracle-agent-card.json
+discovery:
+  path: /.well-known/agent-card.json
+  canonical: true
+  host: edge.arakelproof.space
+  legacy_path_also_served: /.well-known/agent.json
+x-evidence:
+  fetched: '2026-09-15'
+  url: https://edge.arakelproof.space/.well-known/agent-card.json
+  http_status: 200
+  content_type: application/json; charset=utf-8
+a2a_endpoint:
+  url: https://edge.arakelproof.space/a2a
+  binding: JSONRPC
+  probed: '2026-09-15'
+  http_status: 200
+  note: >-
+    Live A2A JSON-RPC endpoint. POST message/send returns an eventedge.a2a.routing.v1
+    payload pointing at the x402 catalog and the Base (eip155:8453) payTo address —
+    the card is backed by a real transport, not a static file.
+grade: flavored
+grade_basis:
+  capabilities_is_object: true
+  skills_is_array: true
+  protocol_version_present_top_level: false
+deviations:
+  - >-
+    protocolVersion is nested inside supportedInterfaces[].protocolVersion ("1.0")
+    rather than declared as a top-level A2A 1.0.0 protocolVersion field, so it fails
+    the top-level protocolVersion hard check.
+  - >-
+    Uses the newer supportedInterfaces[] transport model (one JSONRPC interface at
+    /a2a) instead of the A2A 1.0.0 top-level url + preferredTransport fields.
+  - securityRequirements is an empty array (payment gating is handled out-of-band by x402, not by A2A security).
+skills_count: 6
+note: >-
+  Real, first-party agent card served from the provider's own host, backed by a live
+  /a2a JSON-RPC endpoint. Graded flavored only because it targets a newer card shape
+  than A2A 1.0.0; presence and backing transport are genuine.

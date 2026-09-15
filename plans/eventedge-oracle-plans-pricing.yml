@@ -1,0 +1,48 @@
+generated: '2026-09-15'
+method: probed
+source: https://edge.arakelproof.space/v1/catalog + openapi x-payment-info + /.well-known/x402
+pricing_model: pay-per-request
+plan_count: 0
+currency: USD
+settlement:
+  protocol: x402
+  network: eip155:8453
+  asset: USDC
+  pay_to: '0x3a2F36D61c9BB3b3ee72426e2B6b58d774605B5e'
+note: >-
+  No subscription plans or tiers — pricing is purely usage-based (x402 per call).
+  There is no signup, free allowance beyond the free preflight/teasers routes, or
+  enterprise "contact us" tier. Per-endpoint prices below are read from the live
+  machine catalog. The advertised human /pricing page returns 404; the catalog is
+  the authoritative pricing surface.
+per_request_prices:
+  - id: market-pulse
+    path: /v1/market/pulse
+    price_usd: 0.005
+  - id: cross-market-check
+    path: /v1/market/cross-check
+    price_usd: 0.005
+  - id: market-change-watch
+    path: /v1/market/change-watch
+    price_usd: 0.005
+  - id: agent-market-context
+    path: /v1/agent/market-context
+    price_usd: 0.005
+  - id: agent-topic-context
+    path: /v1/agent/topic-context
+    price_usd: 0.005
+  - id: agent-decision-context
+    path: /v1/agent/decision-context
+    price_usd: 0.01
+  - id: signal
+    path: /v1/signals/top
+    price_usd: 1.00
+  - id: verified-signal
+    path: /v1/signals/verified
+    price_usd: 3.00
+  - id: feed
+    path: /v1/signals/feed
+    price_usd: 5.00
+free_routes:
+  - /v1/agent/preflight
+  - /v1/teasers

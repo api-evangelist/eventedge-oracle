@@ -1,0 +1,49 @@
+generated: '2026-09-15'
+method: derived
+source: >-
+  openapi/eventedge-oracle-openapi.json + live MCP tools/list at
+  https://edge.arakelproof.space/mcp
+surfaces:
+  openapi: openapi/eventedge-oracle-openapi.json
+  mcp: https://edge.arakelproof.space/mcp
+  gated:
+    - >-
+      The paid REST operations return 402 Payment Required until an x402 (USDC on
+      Base) payment is settled; response schemas are described in prose only.
+crosswalk:
+  - tool: teasers
+    category: discovery
+    rest:
+      - 'GET /v1/teasers'
+    binding: name
+    confidence: high
+    note: >-
+      Backs GET /v1/teasers (public sanitized teasers; the spec declares the path
+      but assigns no operationId).
+mcp_only:
+  - tool: catalog
+    reason: >-
+      Returns EventEdge paid-endpoint routing from GET /v1/catalog, which is a
+      discovery route not declared in the OpenAPI paths.
+rest_only:
+  - operationId: predictionMarketPulse
+    reason: x402-paid REST route with no dedicated MCP tool (surfaced via catalog).
+  - operationId: crossMarketTopicCheck
+    reason: x402-paid REST route with no dedicated MCP tool.
+  - operationId: predictionMarketChangeWatch
+    reason: x402-paid REST route with no dedicated MCP tool.
+  - operationId: agentMarketContext
+    reason: x402-paid REST route with no dedicated MCP tool.
+  - operationId: agentTopicContext
+    reason: x402-paid REST route with no dedicated MCP tool.
+  - operationId: agentDecisionContext
+    reason: x402-paid REST route with no dedicated MCP tool.
+coverage:
+  mcp_tools: 2
+  mcp_tools_bound_to_rest: 1
+  rest_operations: 9
+  rest_operations_with_tool: 1
+note: >-
+  The MCP server ships only discovery tools (teasers, catalog); the paid data surface
+  is reached over x402 REST, not over per-operation MCP tools. Crosswalk maps what
+  exists without inventing tool-to-operation bindings.

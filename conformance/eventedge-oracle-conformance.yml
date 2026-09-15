@@ -1,0 +1,39 @@
+generated: '2026-09-15'
+method: probed
+source: >-
+  live 402 challenge, /.well-known/x402 manifest, /.well-known/agent-card.json,
+  and /a2a JSON-RPC endpoint on edge.arakelproof.space
+conformance:
+  - id: x402
+    conforms: true
+    evidence: >-
+      https://edge.arakelproof.space/v1/market/pulse returns HTTP 402 with an x402
+      version-2 payment-required challenge (scheme "exact", network eip155:8453, USDC
+      asset, payTo address); /.well-known/x402 serves an agent402-service-manifest/1.
+    note: >-
+      Domain standard for this market: agentic pay-per-request settlement. x402 (USDC
+      on Base) is the payment/authorization contract, declared in the contract itself,
+      not just claimed in prose.
+  - id: a2a
+    conforms: true
+    evidence: >-
+      https://edge.arakelproof.space/.well-known/agent-card.json (200) plus a live
+      /a2a JSON-RPC endpoint returning eventedge.a2a.routing.v1. See a2a grade
+      (flavored vs A2A 1.0.0) in a2a/eventedge-oracle-a2a.yml.
+  - id: mcp
+    conforms: true
+    evidence: >-
+      https://edge.arakelproof.space/mcp answers tools/list (JSON-RPC 2.0) over
+      Streamable HTTP with 2 tools carrying JSON Schema 2020-12 inputSchemas.
+  - id: rfc9457
+    conforms: false
+    evidence: Error responses are plain application/json, not application/problem+json.
+domain_standard:
+  id: x402
+  conforms: true
+  spec_location: >-
+    payment-required response header on paid routes + /.well-known/x402 service
+    manifest (network eip155:8453, USDC 0x8335...2913, scheme exact)
+  note: >-
+    x402 is the operative standard for agent-native pay-per-call APIs; EventEdge
+    speaks it natively, so an x402-capable agent integrates with no bespoke connector.

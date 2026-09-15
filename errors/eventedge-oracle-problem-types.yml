@@ -1,0 +1,29 @@
+generated: '2026-09-15'
+method: derived
+source: openapi/eventedge-oracle-openapi.json + live 402 probe of /v1/market/pulse
+format: json
+problem_json: false
+note: >-
+  Derived from documented OpenAPI responses. Responses are plain application/json
+  (not RFC 9457 problem+json). The 402 challenge is carried in the payment-required
+  response header per x402 v2.
+problem_types:
+  - status: 402
+    title: Payment Required
+    applies_to:
+      - predictionMarketPulse
+      - crossMarketTopicCheck
+      - predictionMarketChangeWatch
+      - agentMarketContext
+      - agentTopicContext
+      - agentDecisionContext
+    meaning: >-
+      Route is x402-paid and no valid payment was presented. The payment-required
+      header carries the x402 accepts array (scheme exact, network eip155:8453, USDC
+      asset, payTo address, amount, maxTimeoutSeconds).
+    remediation: >-
+      Settle the quoted USDC micropayment on Base and retry with the x402 payment
+      proof. Use /v1/agent/preflight (free) to read prices first.
+    evidence:
+      url: https://edge.arakelproof.space/v1/market/pulse
+      http_status: 402

@@ -1,0 +1,33 @@
+overlay: 1.0.0
+info:
+  title: EventEdge Oracle enrichment overlay
+  version: 1.0.0
+extends: ../openapi/eventedge-oracle-openapi.json
+x-provenance:
+  generated: '2026-09-15'
+  method: generated
+  source: >-
+    Derived from live probes (x402 402 challenge, /v1/catalog, /.well-known/x402) plus
+    the EventEdge OpenAPI. Captures API Evangelist enrichments without mutating the
+    original spec.
+actions:
+  - target: $.info
+    description: Record the x402 payment model and read-only posture at the document level.
+    update:
+      x-payment-protocol: x402
+      x-payment-network: eip155:8453
+      x-payment-asset: USDC
+      x-read-only: true
+      x-no-trade-execution: true
+  - target: $.paths['/v1/market/cross-check'].get
+    description: Note the free preflight and machine catalog that front the paid routes.
+    update:
+      x-preflight: /v1/agent/preflight
+      x-catalog: /v1/catalog
+  - target: $.paths['/v1/signals/top'].get
+    description: >-
+      Attach the missing operationId and price observed in the live /v1/catalog for
+      the top-signal route (the spec omits both).
+    update:
+      operationId: topSignal
+      x-price: '$1.00'

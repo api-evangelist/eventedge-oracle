@@ -1,0 +1,32 @@
+generated: '2026-09-15'
+method: derived
+source: openapi/eventedge-oracle-openapi.json + live 402 probe of /v1/market/pulse
+summary: >-
+  No conventional API authentication. The OpenAPI declares security: [] on every
+  operation and no securitySchemes — there is no API key, OAuth, or bearer token and
+  no signup. Access to paid data is instead gated by the x402 payment protocol: an
+  unpaid request to a paid route returns HTTP 402 with a payment-required challenge,
+  and the caller settles a USDC micropayment on Base (eip155:8453) to receive the
+  payload.
+schemes: []
+access_control:
+  model: x402-payment-gated
+  http_status_on_challenge: 402
+  challenge_header: payment-required
+  network: eip155:8453
+  asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+  asset_name: USD Coin (USDC)
+  pay_to: '0x3a2F36D61c9BB3b3ee72426e2B6b58d774605B5e'
+  scheme: exact
+  max_timeout_seconds: 300
+  free_routes:
+    - /v1/teasers
+    - /v1/agent/preflight
+  evidence:
+    url: https://edge.arakelproof.space/v1/market/pulse
+    http_status: 402
+    fetched: '2026-09-15'
+note: >-
+  Authentication (proving who you are) is intentionally absent; authorization is
+  economic (proving you paid). Documented via the x402 well-known manifest and the
+  live 402 challenge, not a securityScheme.

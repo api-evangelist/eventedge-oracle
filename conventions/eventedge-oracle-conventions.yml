@@ -1,0 +1,52 @@
+generated: '2026-09-15'
+method: derived
+source: openapi/eventedge-oracle-openapi.json + live probes (402 challenge, /v1/agent/preflight)
+auth_style:
+  type: x402-payment
+  detail: >-
+    HTTP 402 + payment-required header; USDC micropayment on Base settles access.
+    No API key or token. See authentication/eventedge-oracle-authentication.yml.
+versioning:
+  style: uri-path
+  current: v1
+  service_version: 0.2.1
+  detail: All routes are namespaced under /v1/. Semantic service version reported at the root descriptor.
+pagination:
+  style: none
+  detail: All routes return single compact context objects; no list pagination is documented.
+error_envelope:
+  format: application/json
+  problem_json: false
+  detail: >-
+    Errors are plain application/json (not RFC 9457 problem+json). 402 responses
+    carry the x402 challenge in the payment-required header.
+rate_limit_signaling:
+  headers: []
+  detail: >-
+    No X-RateLimit-* / RateLimit-* / Retry-After headers observed on live 402 or
+    free-route responses. See rate-limits/eventedge-oracle-rate-limits.yml.
+request_tracing:
+  headers: []
+  detail: No documented request-id / trace header.
+idempotency:
+  coverage: na
+  scope: []
+  detail: >-
+    Entire surface is read-only HTTP GET (market context, comparison, monitoring).
+    There is no mutating operation, so there is no Idempotency-Key mechanism and none
+    is needed — reads are inherently idempotent.
+dry_run_mode:
+  status: documented
+  detail: >-
+    Free /v1/agent/preflight returns routing + prices before any paid call, letting an
+    agent rehearse route selection and cost without spending; /v1/teasers previews
+    sanitized signals. Not a full test mode.
+reversibility:
+  status: na
+  detail: >-
+    Read-only API with no write, order, or state-changing operation, so there is
+    nothing to cancel, refund, or reverse. Payments are x402 micropayments settled
+    on-chain outside the API surface.
+note: >-
+  A machine-native, read-only, pay-per-request API. Idempotency, reversibility, and
+  dry-run are assessed against a surface that performs no writes.

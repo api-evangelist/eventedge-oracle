@@ -1,0 +1,27 @@
+generated: '2026-09-15'
+method: searched
+source: >-
+  https://edge.arakelproof.space/ (root descriptor), openapi info.version,
+  /.well-known/discovery-status
+versioning:
+  scheme: uri-path + semver-service
+  current_uri_version: v1
+  service_version: 0.2.1
+  detail: Routes namespaced under /v1/; the service reports semver 0.2.1 at the root and in the OpenAPI info.
+deprecation_policy:
+  present: false
+  detail: No deprecation or Sunset/Deprecation (RFC 8594) header policy is documented.
+status_page:
+  human_status_page: false
+  machine_health:
+    url: https://edge.arakelproof.space/.well-known/discovery-status
+    status: 200
+    detail: >-
+      Serves an autonomous.discovery.status.v1 self-registration/telemetry document
+      (health, registry visibility, x402 directory syndication). This is machine
+      discovery telemetry, not a consumer-facing uptime status page.
+sla:
+  present: false
+note: >-
+  New service (domain registered 2026-08-27). Versioned and machine-discoverable but
+  publishes no deprecation policy, SLA, or human status page.

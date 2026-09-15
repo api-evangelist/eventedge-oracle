@@ -1,0 +1,33 @@
+generated: '2026-09-15'
+method: probed
+source: live probes of /.well-known/* and advertised discovery paths on edge.arakelproof.space
+hosts:
+  - host: edge.arakelproof.space
+    documents:
+      - path: /.well-known/ai-plugin.json
+        status: 200
+        file: eventedge-oracle-ai-plugin.json
+      - path: /.well-known/x402
+        status: 200
+        file: eventedge-oracle-x402.json
+      - path: /.well-known/agent-card.json
+        status: 200
+        file: ../a2a/eventedge-oracle-agent-card.json
+      - path: /.well-known/agent.json
+        status: 200
+        file: ../a2a/eventedge-oracle-agent-card.json
+      - path: /.well-known/security.txt
+        status: 404
+      - path: /.well-known/openid-configuration
+        status: 404
+      - path: /.well-known/oauth-authorization-server
+        status: 404
+      - path: /.well-known/oauth-protected-resource
+        status: 404
+      - path: /.well-known/api-catalog
+        status: 404
+note: >-
+  Real documents are served at /.well-known/ai-plugin.json (OpenAI plugin manifest),
+  /.well-known/x402 (agent402 service manifest v1 with the full paid-tool catalog and
+  Base payTo address), and the A2A agent card (canonical and legacy paths). No
+  security.txt, OIDC/OAuth metadata, or RFC 9727 api-catalog is served.

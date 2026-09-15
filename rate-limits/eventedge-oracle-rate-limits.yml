@@ -1,0 +1,14 @@
+generated: '2026-09-15'
+method: probed
+source: >-
+  live response headers on https://edge.arakelproof.space/v1/market/pulse (402) and
+  /v1/agent/preflight (200); docs review of llms.txt + openapi
+limit_count: 0
+rate_limits: []
+observed_headers: []
+exhaustion_status: null
+note: >-
+  No published rate limits and no X-RateLimit-*/RateLimit-*/Retry-After headers
+  observed on live free or 402 responses. Access is metered economically per request
+  via x402 micropayments rather than by a request-count rate limit; the 402 is a
+  payment challenge, not a throttle. Honest zero.

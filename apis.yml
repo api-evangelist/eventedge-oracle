@@ -2,7 +2,8 @@ name: EventEdge Oracle
 description: >-
   Read-only, machine-readable prediction-market context (Polymarket + Kalshi) built for autonomous AI agents. Provides
   decision-support data only (no trade execution), accessed via the x402 pay-per-request payment protocol (USDC on
-  Base). Exposes a REST API, a live MCP server, and advertised OpenAPI/llms.txt surfaces.
+  Base). Exposes a REST API (OpenAPI 3.1), a live remote MCP server, an A2A agent card backed by a live /a2a JSON-RPC
+  endpoint, and llms.txt / ai-plugin / x402 discovery surfaces.
 url: https://raw.githubusercontent.com/api-evangelist/eventedge-oracle/refs/heads/main/apis.yml
 created: '2026-09-15'
 modified: '2026-09-15'
@@ -21,7 +22,7 @@ apis:
     description: >-
       Read-only REST API providing compact market context, topic-specific context, and richer decision-support context
       for AI agents. Payment-gated via x402 (USDC on Base); no API key or signup. Also exposes a live MCP server with
-      catalog and teasers tools.
+      catalog and teasers tools and a live A2A JSON-RPC endpoint.
     humanURL: https://edge.arakelproof.space
     baseURL: https://edge.arakelproof.space
     tags:
@@ -34,15 +35,56 @@ apis:
       - decision-support
       - finance
     properties:
+      - type: OpenAPI
+        url: openapi/eventedge-oracle-openapi.json
       - type: MCPServer
         url: https://edge.arakelproof.space/mcp
+      - type: ToolCrosswalk
+        url: mcp/eventedge-oracle-tool-crosswalk.yml
+      - type: AgentCard
+        url: a2a/eventedge-oracle-a2a.yml
+      - type: LLMsTxt
+        url: llms/eventedge-oracle-llms.txt
+      - type: WellKnown
+        url: well-known/eventedge-oracle-well-known.yml
+      - type: Authentication
+        url: authentication/eventedge-oracle-authentication.yml
+      - type: Conventions
+        url: conventions/eventedge-oracle-conventions.yml
+      - type: ErrorCatalog
+        url: errors/eventedge-oracle-problem-types.yml
+      - type: Conformance
+        url: conformance/eventedge-oracle-conformance.yml
+      - type: AgentSkill
+        url: skills/_index.yml
+      - type: Overlay
+        url: overlays/eventedge-oracle-openapi-overlay.yaml
+      - type: DomainSecurity
+        url: security/eventedge-oracle-domain-security.yml
+      - type: RateLimits
+        url: rate-limits/eventedge-oracle-rate-limits.yml
+      - type: Plans
+        url: plans/eventedge-oracle-plans-pricing.yml
       - type: Documentation
         url: https://edge.arakelproof.space
+      - type: APIReference
+        url: https://edge.arakelproof.space/openapi.json
+      - type: Pricing
+        url: https://edge.arakelproof.space/v1/catalog
+common:
+  - type: Website
+    url: https://edge.arakelproof.space
 maintainers:
   - FN: EventEdge Oracle
+    email: maxxxil@mail.ru
     url: https://edge.arakelproof.space
 generated:
   by: apis.io/add
   model: claude-opus-4-8
   confidence: 80
   at: '2026-09-15T10:25:45.583Z'
+x-enrichment:
+  date: '2026-09-15'
+  status: enriched
+  artifacts_added: 15
+  pass: local-v3

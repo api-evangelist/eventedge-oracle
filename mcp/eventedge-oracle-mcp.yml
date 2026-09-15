@@ -1,0 +1,37 @@
+generated: '2026-09-15'
+method: searched
+source: https://edge.arakelproof.space/mcp
+name: EventEdge Oracle MCP Server
+description: >-
+  Live remote MCP server (Streamable HTTP) for EventEdge Oracle. Exposes discovery
+  tools that surface the x402-paid prediction-market endpoints; exact markets and
+  paid payloads remain gated behind x402 settlement.
+deployment:
+  mode: remote
+  endpoint: https://edge.arakelproof.space/mcp
+  auth: none
+  verified: probed
+transport: streamable-http
+probe:
+  url: https://edge.arakelproof.space/mcp
+  method: 'POST tools/list'
+  http_status: 200
+  fetched: '2026-09-15'
+tools:
+  - name: teasers
+    description: >-
+      List sanitized, unexpired EventEdge opportunity teasers. Exact markets are
+      withheld until x402 payment.
+    inputSchema:
+      type: object
+      properties: {}
+  - name: catalog
+    description: List EventEdge x402 paid machine endpoints.
+    inputSchema:
+      type: object
+      properties: {}
+note: >-
+  tools/list returned 2 anonymous discovery tools with real inputSchemas. The
+  revenue-bearing surface (market pulse, cross-check, change-watch, agent context,
+  decision context) is the x402-paid REST catalog these tools point at, not separate
+  MCP tools. Health-checked "Healthy" by the Glama registry.
