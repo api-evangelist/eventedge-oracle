@@ -71,6 +71,8 @@ apis:
   humanURL: https://edge.arakelproof.space
   baseURL: https://edge.arakelproof.space
   tags:
+  - One-Time Payments
+  tags_raw:
   - One-time payments
   properties:
   - type: OpenAPI
@@ -109,6 +111,8 @@ apis:
   humanURL: https://edge.arakelproof.space
   baseURL: https://edge.arakelproof.space
   tags:
+  - Recurring Payments
+  tags_raw:
   - Recurring payments
   properties:
   - type: OpenAPI
@@ -185,6 +189,8 @@ apis:
   humanURL: https://edge.arakelproof.space
   baseURL: https://edge.arakelproof.space
   tags:
+  - Services
+  tags_raw:
   - Service
   properties:
   - type: OpenAPI
@@ -223,6 +229,8 @@ apis:
   humanURL: https://edge.arakelproof.space
   baseURL: https://edge.arakelproof.space
   tags:
+  - Subscription
+  tags_raw:
   - Subscriptions
   properties:
   - type: OpenAPI
