@@ -1,0 +1,267 @@
+openapi: 3.2.0
+info:
+  title: P2Flux Cancellation API
+  version: 1.0.0
+  summary: Non-custodial USDC payments, subscriptions and refunds on Base.
+  description: Programmable, non-custodial payments on Base.
+  contact:
+    name: P2Flux
+    url: https://p2flux.com/docs/
+  license:
+    name: Documentation for the hosted P2Flux API
+    url: https://p2flux.com/terms.html
+servers:
+- url: https://api.p2flux.com
+  description: 'Production - Base Mainnet (8453). Real money: every settlement moves real USDC and cannot be reversed by P2Flux. Point your integration here; use the test server for experiments.'
+- url: https://api-test.p2flux.com
+  description: Test - Base Sepolia (84532). Identical API against the test deployment; value moved here is faucet USDC, not real money. The interactive explorer is restricted to this server by design.
+security: []
+tags:
+- name: Cancellation
+  description: Unsigned calldata for the customer's own wallet to send.
+paths:
+  /v1/allowances/revoke/prepare:
+    post:
+      operationId: prepareAllowanceRevocation
+      summary: Calldata that stops every P2Flux subscription
+      tags:
+      - Cancellation
+      description: Sets the token allowance to zero - the customer's blunt instrument. It stops every P2Flux subscription for that wallet at once, not just one. Their wallet sends it.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties: {}
+      responses:
+        '200':
+          description: Unsigned calldata.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chain_id:
+                    type: integer
+                  to:
+                    $ref: '#/components/schemas/Address'
+                  data:
+                    type: string
+                  description:
+                    type: string
+        '400':
+          description: 'Refused. `error` names which of: `INVALID_REQUEST`'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/subscriptions/revoke/prepare:
+    post:
+      operationId: prepareSubscriptionCancellation
+      summary: Calldata that cancels one subscription
+      tags:
+      - Cancellation
+      description: P2Flux cannot revoke a customer's on-chain authority - only their wallet can. This returns the transaction for them to send. Accepts either the stored capability (server-side) or a cancel token (customer-side).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                subscription:
+                  $ref: '#/components/schemas/Token'
+              required:
+              - subscription
+      responses:
+        '200':
+          description: Unsigned calldata.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chain_id:
+                    type: integer
+                  payer:
+                    $ref: '#/components/schemas/Address'
+                  to:
+                    $ref: '#/components/schemas/Address'
+                  data:
+                    type: string
+                  subscription_id:
+                    $ref: '#/components/schemas/Bytes32'
+                  description:
+                    type: string
+        '400':
+          description: 'Refused. `error` names which of: `INVALID_SUBSCRIPTION`, `INVALID_CANCEL_TOKEN`, `CANCEL_TOKEN_EXPIRED`'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/subscriptions/revoke/session:
+    post:
+      operationId: createCancellationSession
+      summary: A short-lived token safe to give a browser
+      tags:
+      - Cancellation
+      description: Exchanges the stored capability for a token that carries the authorization fields needed to build a revoke transaction - and neither the customer's signature nor any ability to charge. Safe to put in a URL fragment; the contract still requires the payer's own wallet to send the transaction, so holding it grants nobody anything.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                subscription:
+                  $ref: '#/components/schemas/Token'
+              required:
+              - subscription
+      responses:
+        '200':
+          description: A cancel token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cancel_token:
+                    $ref: '#/components/schemas/Token'
+                  expires_at:
+                    type: integer
+                  subscription_id:
+                    $ref: '#/components/schemas/Bytes32'
+                  payer:
+                    $ref: '#/components/schemas/Address'
+        '400':
+          description: 'Refused. `error` names which of: `INVALID_SUBSCRIPTION`'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Bytes32:
+      type: string
+      pattern: ^0x[0-9a-f]{64}$
+      description: A 32-byte hex value, lowercase. Transaction hashes and references.
+      examples:
+      - '0x2d6bbc112885a6976289e599f71003f7d310e7152ebd662c6221dffd3e0da708'
+    Token:
+      type: string
+      maxLength: 8192
+      description: 'A signed P2Flux capability: payment intent (p2f1.), setup token (p2setup2.), subscription capability (p2s2.), cancel token (p2cancel1.) or refund token (p2refund1.). Opaque to the caller and unforgeable - the signature is what authorises the call. Treat it as a bearer secret: keep it server-side, never in a URL query or a log.'
+    Address:
+      type: string
+      pattern: ^0x[0-9a-fA-F]{40}$
+      description: An EVM address.
+      examples:
+      - '0xb4e43f3fBa5Add75395adAD366627E7d74141Fa9'
+    MerchantAction:
+      type: string
+      enum:
+      - SUCCESS
+      - WAIT
+      - RETRY_LATER
+      - CUSTOMER_ACTION_REQUIRED
+      - STOP_SUBSCRIPTION
+      - INVALID_REQUEST
+      description: 'What to do about a result.
+
+
+        - `SUCCESS` - done, nothing owed.
+
+        - `WAIT` - **the money may already have moved.** The transaction exists and has not settled to the required depth. Ask again about the SAME transaction; never start another one. This is not a failure, and showing the customer an error here tells someone who has paid that they have not.
+
+        - `RETRY_LATER` - nothing happened; the identical call is safe to repeat on your own schedule.
+
+        - `CUSTOMER_ACTION_REQUIRED` - the customer must top up or re-approve.
+
+        - `STOP_SUBSCRIPTION` - terminal; stop charging this subscription.
+
+        - `INVALID_REQUEST` - permanent. Retrying returns the same answer forever; fix the request.'
+    Error:
+      type: object
+      description: The uniform error envelope. `error` is the P2Flux code; `action` is what a merchant system should do about it, so integrations never hard-code that table themselves. Extra keys carry detail specific to the code (for example `retry_after`, `confirmations`, `as_of_block`).
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorCode'
+        action:
+          $ref: '#/components/schemas/MerchantAction'
+      additionalProperties: true
+      examples:
+      - error: INSUFFICIENT_BALANCE
+        action: CUSTOMER_ACTION_REQUIRED
+    ErrorCode:
+      type: string
+      enum:
+      - INVALID_INTENT
+      - INTENT_EXPIRED
+      - INVALID_REFERENCE
+      - INVALID_SETUP_TOKEN
+      - SETUP_TOKEN_EXPIRED
+      - INVALID_CANCEL_TOKEN
+      - CANCEL_TOKEN_EXPIRED
+      - TERMS_MISMATCH
+      - AMOUNT_OUT_OF_BOUNDS
+      - PERIOD_OUT_OF_BOUNDS
+      - PERMISSION_NOT_FOUND
+      - TRANSACTION_NOT_FOUND
+      - PERMISSION_REVOKED
+      - ALREADY_CHARGED
+      - NOT_DUE
+      - SUBSCRIPTION_EXPIRED
+      - INVALID_SIGNATURE
+      - REFUND_CONFIRMING
+      - INVALID_REFUND_TOKEN
+      - REFUND_TOKEN_EXPIRED
+      - REFUND_AMOUNT_INVALID
+      - REFUND_WRONG_MERCHANT
+      - REFUND_TRANSACTION_MISMATCH
+      - REFUND_ORIGINAL_PAYMENT_INVALID
+      - SIGNATURE_VALIDATION_TOO_EXPENSIVE
+      - UNSUPPORTED_SIGNATURE_FORMAT
+      - PAYMENT_ALREADY_PROCESSED
+      - PAYMENT_NOT_FOUND
+      - PAYMENT_RECOVERY_INCONSISTENT
+      - RECOVERY_UNAVAILABLE
+      - WRONG_SPENDER
+      - WRONG_TOKEN
+      - INVALID_EXTRA_DATA
+      - GAS_FEE_TOO_HIGH
+      - INSUFFICIENT_ALLOWANCE
+      - INSUFFICIENT_BALANCE
+      - INVALID_SUBSCRIPTION
+      - RPC_ERROR
+      - RELAYER_ERROR
+      - INTERNAL_ERROR
+      - TRANSACTION_REVERTED
+      - INVALID_REQUEST
+      - RATE_LIMITED
+      - CONCURRENCY_LIMIT
+      - GAS_TOO_HIGH
+      - GAS_QUOTE_UNAVAILABLE
+      - PAYMENT_CONFIRMING
+      - RELAYER_TX_COST_TOO_HIGH
+      - RELAYER_BUDGET_EXCEEDED
+      - RELAYER_NOT_READY
+      - RPC_BUSY
+      - PAYMENT_TOKEN_GAS_UNSUPPORTED
+      - PAYMENT_TOKEN_GAS_UNAVAILABLE
+      - PAYMENT_TOKEN_GAS_QUOTE_EXPIRED
+      - PAYMENT_TOKEN_GAS_LIMIT_EXCEEDED
+      - INVALID_GAS_QUOTE
+      - INSUFFICIENT_PAYMENT_TOKEN_FOR_GAS
+      - SPONSORED_TRANSACTION_FAILED
+      - SPONSORED_PERMIT_FAILED
+      - SPONSORSHIP_CONFIRMING
+      description: Every code this API can return. Stable identifiers - branch on these, never on the human-readable text or the HTTP status alone.
+externalDocs:
+  description: Guides, flows and worked examples
+  url: https://p2flux.com/docs/

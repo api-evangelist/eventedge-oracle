@@ -1,0 +1,31 @@
+{
+  "provider": "eventedge-oracle",
+  "sources": [
+    "_original/eventedge-oracle-openapi.json"
+  ],
+  "outputs": [
+    "eventedge-oracle-cancellation-api-openapi.yml",
+    "eventedge-oracle-one-time-payments-api-openapi.yml",
+    "eventedge-oracle-recurring-payments-api-openapi.yml",
+    "eventedge-oracle-refunds-api-openapi.yml",
+    "eventedge-oracle-service-api-openapi.yml",
+    "eventedge-oracle-subscriptions-api-openapi.yml"
+  ],
+  "archived": [],
+  "errors": [],
+  "warnings": [],
+  "notes": [
+    "sourced from openapi/_original/ (1 archived document(s)); previously refined output at the top level was skipped rather than re-split",
+    "eventedge-oracle-openapi.json: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "eventedge-oracle-openapi.json: declared missing tag: Subscriptions",
+    "apis.yml register: already-registered"
+  ],
+  "skipped": [
+    "eventedge-oracle-cancellation-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "eventedge-oracle-one-time-payments-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "eventedge-oracle-recurring-payments-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "eventedge-oracle-refunds-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "eventedge-oracle-service-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "eventedge-oracle-subscriptions-api-openapi.yml: previously refined output, superseded by openapi/_original/"
+  ]
+}

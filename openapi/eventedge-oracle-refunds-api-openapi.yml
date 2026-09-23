@@ -1,0 +1,391 @@
+openapi: 3.2.0
+info:
+  title: P2Flux Refunds API
+  version: 1.0.0
+  summary: Non-custodial USDC payments, subscriptions and refunds on Base.
+  description: Programmable, non-custodial payments on Base.
+  contact:
+    name: P2Flux
+    url: https://p2flux.com/docs/
+  license:
+    name: Documentation for the hosted P2Flux API
+    url: https://p2flux.com/terms.html
+servers:
+- url: https://api.p2flux.com
+  description: 'Production - Base Mainnet (8453). Real money: every settlement moves real USDC and cannot be reversed by P2Flux. Point your integration here; use the test server for experiments.'
+- url: https://api-test.p2flux.com
+  description: Test - Base Sepolia (84532). Identical API against the test deployment; value moved here is faucet USDC, not real money. The interactive explorer is restricted to this server by design.
+security: []
+tags:
+- name: Refunds
+  description: A transfer from the merchant's own wallet back to the wallet that paid.
+paths:
+  /v1/refunds/prepare:
+    post:
+      operationId: prepareRefund
+      summary: Lock the terms of a refund
+      tags:
+      - Refunds
+      description: 'A refund is a plain USDC transfer **from the merchant''s own wallet to the wallet that paid**. There is no refund contract, no relayer and no P2Flux custody in the path: P2Flux charges no refund fee, returns none of its original commission, and the merchant pays the gas.
+
+
+        Everything is derived from the chain. You supply identifiers and an integer amount - there is no field for a recipient anywhere in this API, because a refund endpoint that accepted one would be a withdrawal endpoint.
+
+
+        **P2Flux keeps no refund history.** It cannot tell you whether a payment was already refunded, and calling this twice will happily prepare two valid refunds. One refund per payment is your integration''s rule to enforce, and the safe place is BEFORE this call: reserve the order row atomically, then prepare.
+
+
+        The returned `refund_token` is short-lived and for a browser only. Do not store it - reconciliation later goes through `/v1/refunds/verify` with the original settlement, which needs no token.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                intent:
+                  $ref: '#/components/schemas/Token'
+                subscription:
+                  $ref: '#/components/schemas/Token'
+                tx_hash:
+                  $ref: '#/components/schemas/Bytes32'
+                period_index:
+                  type: integer
+                  minimum: 0
+                  description: Recurring only. Refunds are per charge, never per subscription.
+                amount:
+                  $ref: '#/components/schemas/AmountUnits'
+              required:
+              - tx_hash
+              - amount
+        description: 'Identify the ORIGINAL settlement: `intent` (one-time) **or** `subscription` (recurring), plus the `tx_hash` that carried it. The capability says what was authorised, the receipt says what happened. Send exactly one of the two identifiers; sending neither is refused, and sending both prefers `intent`.'
+      responses:
+        '200':
+          description: Terms for the merchant's wallet to send.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refund_token:
+                    $ref: '#/components/schemas/Token'
+                  chain_id:
+                    type: integer
+                  token:
+                    $ref: '#/components/schemas/Address'
+                  merchant:
+                    $ref: '#/components/schemas/Address'
+                  payer:
+                    $ref: '#/components/schemas/Address'
+                  original_amount:
+                    $ref: '#/components/schemas/Amount'
+                  original_amount_units:
+                    $ref: '#/components/schemas/AmountUnits'
+                  refund_amount:
+                    $ref: '#/components/schemas/Amount'
+                  refund_amount_units:
+                    $ref: '#/components/schemas/AmountUnits'
+                  expires_at:
+                    type: integer
+                    description: Unix seconds; about fifteen minutes out.
+              examples:
+                prepared:
+                  value:
+                    refund_token: p2refund1.k1.eyJ2IjoxfQ.c2lnbmF0dXJl
+                    chain_id: 8453
+                    merchant: '0x4e2100539a382e7b91E77D932bE1018243660Be2'
+                    payer: '0x9B710c4Cc6A63Fc0728748Af852e2183fb936262'
+                    original_amount: '0.250000'
+                    original_amount_units: '250000'
+                    refund_amount: '0.250000'
+                    refund_amount_units: '250000'
+        '400':
+          description: '`REFUND_AMOUNT_INVALID`: zero, non-integer, or above the ceiling. The maximum is the COMMERCIAL amount the buyer paid - so a full refund means the merchant absorbs the original P2Flux fee. For a recurring charge the ceiling excludes the gas reimbursement, which paid for a transaction that already happened.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: 'Refused. `error` names which of: `RPC_ERROR`'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/refunds/resolve:
+    post:
+      operationId: resolveRefund
+      summary: Read a refund token back (browser)
+      tags:
+      - Refunds
+      description: 'The terms behind a prepare token, for the browser holding it. Reading is all it does - the token is already signed, so nothing here can change where a refund goes.
+
+
+        Consumed by the hosted checkout, not usually by a server integration: the merchant page must not be able to tell the checkout who the recipient is, or a shop that could name it could redirect a refund.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                refund_token:
+                  $ref: '#/components/schemas/Token'
+              required:
+              - refund_token
+      responses:
+        '200':
+          description: Exactly what P2Flux signed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chain_id:
+                    type: integer
+                  token:
+                    $ref: '#/components/schemas/Address'
+                  merchant:
+                    $ref: '#/components/schemas/Address'
+                  payer:
+                    $ref: '#/components/schemas/Address'
+                  amount:
+                    $ref: '#/components/schemas/Amount'
+                  amount_units:
+                    $ref: '#/components/schemas/AmountUnits'
+                  expires_at:
+                    type: integer
+        '400':
+          description: Both permanent - a malformed or aged-out token never becomes valid. Prepare again.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/refunds/verify:
+    post:
+      operationId: verifyRefund
+      summary: Verify a refund transfer against the chain
+      tags:
+      - Refunds
+      description: 'Did the refund actually happen, and has it settled? Takes the ORIGINAL settlement rather than the prepare token, deliberately: a refund may need reconciling days later - after a crash, or a support ticket - and a fifteen-minute bearer token cannot answer that.
+
+
+        A transaction hash is not a refund. This checks the receipt carries exactly one USDC transfer from the original merchant to the original payer for exactly this amount, matched **by event rather than by transaction sender** - so a Safe or smart account executing on the merchant''s behalf verifies correctly.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                intent:
+                  $ref: '#/components/schemas/Token'
+                subscription:
+                  $ref: '#/components/schemas/Token'
+                tx_hash:
+                  $ref: '#/components/schemas/Bytes32'
+                period_index:
+                  type: integer
+                  minimum: 0
+                  description: Recurring only. Refunds are per charge, never per subscription.
+                refund_amount:
+                  $ref: '#/components/schemas/AmountUnits'
+                refund_tx_hash:
+                  $ref: '#/components/schemas/Bytes32'
+              required:
+              - tx_hash
+              - refund_amount
+              - refund_tx_hash
+        description: 'Identify the ORIGINAL settlement: `intent` (one-time) **or** `subscription` (recurring), plus the `tx_hash` that carried it. The capability says what was authorised, the receipt says what happened. Send exactly one of the two identifiers; sending neither is refused, and sending both prefers `intent`.'
+      responses:
+        '200':
+          description: Settled.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    const: REFUNDED
+                  refund_tx_hash:
+                    $ref: '#/components/schemas/Bytes32'
+                  refund_amount:
+                    $ref: '#/components/schemas/AmountUnits'
+                  original_amount:
+                    $ref: '#/components/schemas/AmountUnits'
+                  payer:
+                    $ref: '#/components/schemas/Address'
+                  merchant:
+                    $ref: '#/components/schemas/Address'
+                  block_number:
+                    type: string
+              examples:
+                settled:
+                  value:
+                    status: REFUNDED
+                    refund_tx_hash: '0x7ac0b6a532f23a6aa4f0b3aa6dc13665a2a3bdbd17216331a202851b267ccf65'
+                    refund_amount: '250000'
+                    original_amount: '250000'
+        '400':
+          description: '`REFUND_TRANSACTION_MISMATCH`: that receipt does not contain the refund it was supposed to. Never mark an order refunded on this - investigate the transaction.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: '`REFUND_CONFIRMING` - the transfer is on chain and not yet settled to the required depth. **The money may already have moved.** Poll the SAME `refund_tx_hash`; sending another refund because this one has not confirmed is how a customer gets paid twice.
+
+
+            *Changed 2026-08-21: this was previously HTTP 400. Branch on the `error` code, not the status.*'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                confirming:
+                  value:
+                    error: REFUND_CONFIRMING
+                    action: WAIT
+        '502':
+          description: 'Refused. `error` names which of: `RPC_ERROR`'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Error:
+      type: object
+      description: The uniform error envelope. `error` is the P2Flux code; `action` is what a merchant system should do about it, so integrations never hard-code that table themselves. Extra keys carry detail specific to the code (for example `retry_after`, `confirmations`, `as_of_block`).
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorCode'
+        action:
+          $ref: '#/components/schemas/MerchantAction'
+      additionalProperties: true
+      examples:
+      - error: INSUFFICIENT_BALANCE
+        action: CUSTOMER_ACTION_REQUIRED
+    Bytes32:
+      type: string
+      pattern: ^0x[0-9a-f]{64}$
+      description: A 32-byte hex value, lowercase. Transaction hashes and references.
+      examples:
+      - '0x2d6bbc112885a6976289e599f71003f7d310e7152ebd662c6221dffd3e0da708'
+    Token:
+      type: string
+      maxLength: 8192
+      description: 'A signed P2Flux capability: payment intent (p2f1.), setup token (p2setup2.), subscription capability (p2s2.), cancel token (p2cancel1.) or refund token (p2refund1.). Opaque to the caller and unforgeable - the signature is what authorises the call. Treat it as a bearer secret: keep it server-side, never in a URL query or a log.'
+    MerchantAction:
+      type: string
+      enum:
+      - SUCCESS
+      - WAIT
+      - RETRY_LATER
+      - CUSTOMER_ACTION_REQUIRED
+      - STOP_SUBSCRIPTION
+      - INVALID_REQUEST
+      description: 'What to do about a result.
+
+
+        - `SUCCESS` - done, nothing owed.
+
+        - `WAIT` - **the money may already have moved.** The transaction exists and has not settled to the required depth. Ask again about the SAME transaction; never start another one. This is not a failure, and showing the customer an error here tells someone who has paid that they have not.
+
+        - `RETRY_LATER` - nothing happened; the identical call is safe to repeat on your own schedule.
+
+        - `CUSTOMER_ACTION_REQUIRED` - the customer must top up or re-approve.
+
+        - `STOP_SUBSCRIPTION` - terminal; stop charging this subscription.
+
+        - `INVALID_REQUEST` - permanent. Retrying returns the same answer forever; fix the request.'
+    AmountUnits:
+      type: string
+      pattern: ^\d{1,20}$
+      description: An integer count of micro-USDC (6 decimals), as a string. 2500000 is 2.50 USDC. Used wherever a decimal would invite a rounding error - notably refund amounts.
+      examples:
+      - '2500000'
+    Address:
+      type: string
+      pattern: ^0x[0-9a-fA-F]{40}$
+      description: An EVM address.
+      examples:
+      - '0xb4e43f3fBa5Add75395adAD366627E7d74141Fa9'
+    ErrorCode:
+      type: string
+      enum:
+      - INVALID_INTENT
+      - INTENT_EXPIRED
+      - INVALID_REFERENCE
+      - INVALID_SETUP_TOKEN
+      - SETUP_TOKEN_EXPIRED
+      - INVALID_CANCEL_TOKEN
+      - CANCEL_TOKEN_EXPIRED
+      - TERMS_MISMATCH
+      - AMOUNT_OUT_OF_BOUNDS
+      - PERIOD_OUT_OF_BOUNDS
+      - PERMISSION_NOT_FOUND
+      - TRANSACTION_NOT_FOUND
+      - PERMISSION_REVOKED
+      - ALREADY_CHARGED
+      - NOT_DUE
+      - SUBSCRIPTION_EXPIRED
+      - INVALID_SIGNATURE
+      - REFUND_CONFIRMING
+      - INVALID_REFUND_TOKEN
+      - REFUND_TOKEN_EXPIRED
+      - REFUND_AMOUNT_INVALID
+      - REFUND_WRONG_MERCHANT
+      - REFUND_TRANSACTION_MISMATCH
+      - REFUND_ORIGINAL_PAYMENT_INVALID
+      - SIGNATURE_VALIDATION_TOO_EXPENSIVE
+      - UNSUPPORTED_SIGNATURE_FORMAT
+      - PAYMENT_ALREADY_PROCESSED
+      - PAYMENT_NOT_FOUND
+      - PAYMENT_RECOVERY_INCONSISTENT
+      - RECOVERY_UNAVAILABLE
+      - WRONG_SPENDER
+      - WRONG_TOKEN
+      - INVALID_EXTRA_DATA
+      - GAS_FEE_TOO_HIGH
+      - INSUFFICIENT_ALLOWANCE
+      - INSUFFICIENT_BALANCE
+      - INVALID_SUBSCRIPTION
+      - RPC_ERROR
+      - RELAYER_ERROR
+      - INTERNAL_ERROR
+      - TRANSACTION_REVERTED
+      - INVALID_REQUEST
+      - RATE_LIMITED
+      - CONCURRENCY_LIMIT
+      - GAS_TOO_HIGH
+      - GAS_QUOTE_UNAVAILABLE
+      - PAYMENT_CONFIRMING
+      - RELAYER_TX_COST_TOO_HIGH
+      - RELAYER_BUDGET_EXCEEDED
+      - RELAYER_NOT_READY
+      - RPC_BUSY
+      - PAYMENT_TOKEN_GAS_UNSUPPORTED
+      - PAYMENT_TOKEN_GAS_UNAVAILABLE
+      - PAYMENT_TOKEN_GAS_QUOTE_EXPIRED
+      - PAYMENT_TOKEN_GAS_LIMIT_EXCEEDED
+      - INVALID_GAS_QUOTE
+      - INSUFFICIENT_PAYMENT_TOKEN_FOR_GAS
+      - SPONSORED_TRANSACTION_FAILED
+      - SPONSORED_PERMIT_FAILED
+      - SPONSORSHIP_CONFIRMING
+      description: Every code this API can return. Stable identifiers - branch on these, never on the human-readable text or the HTTP status alone.
+    Amount:
+      type: string
+      pattern: ^\d{1,12}(\.\d{1,6})?$
+      description: 'A USDC amount as a decimal string, up to 6 decimal places. Never a JSON number: binary floating point cannot represent most decimal prices exactly, and this is money.'
+      examples:
+      - '10.00'
+      - '0.250000'
+externalDocs:
+  description: Guides, flows and worked examples
+  url: https://p2flux.com/docs/

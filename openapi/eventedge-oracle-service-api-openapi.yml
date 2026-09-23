@@ -1,0 +1,46 @@
+openapi: 3.2.0
+info:
+  title: P2Flux Service API
+  version: 1.0.0
+  summary: Non-custodial USDC payments, subscriptions and refunds on Base.
+  description: Programmable, non-custodial payments on Base.
+  contact:
+    name: P2Flux
+    url: https://p2flux.com/docs/
+  license:
+    name: Documentation for the hosted P2Flux API
+    url: https://p2flux.com/terms.html
+servers:
+- url: https://api.p2flux.com
+  description: 'Production - Base Mainnet (8453). Real money: every settlement moves real USDC and cannot be reversed by P2Flux. Point your integration here; use the test server for experiments.'
+- url: https://api-test.p2flux.com
+  description: Test - Base Sepolia (84532). Identical API against the test deployment; value moved here is faucet USDC, not real money. The interactive explorer is restricted to this server by design.
+security: []
+tags:
+- name: Service
+  description: Liveness.
+paths:
+  /health:
+    get:
+      operationId: health
+      summary: Liveness
+      tags:
+      - Service
+      description: 'The one endpoint the whole internet can reach, so it says that the process is up and nothing else - no balances, no counters, no version. Not rate limited. It is not a readiness check: operational state is internal and deliberately not published.'
+      responses:
+        '200':
+          description: The process is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    const: true
+              examples:
+                up:
+                  value:
+                    ok: true
+externalDocs:
+  description: Guides, flows and worked examples
+  url: https://p2flux.com/docs/

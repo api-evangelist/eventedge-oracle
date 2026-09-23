@@ -1,0 +1,216 @@
+openapi: 3.2.0
+info:
+  title: P2Flux Subscriptions API
+  version: 1.0.0
+  summary: Non-custodial USDC payments, subscriptions and refunds on Base.
+  description: Programmable, non-custodial payments on Base.
+  contact:
+    name: P2Flux
+    url: https://p2flux.com/docs/
+  license:
+    name: Documentation for the hosted P2Flux API
+    url: https://p2flux.com/terms.html
+servers:
+- url: https://api.p2flux.com
+  description: 'Production - Base Mainnet (8453). Real money: every settlement moves real USDC and cannot be reversed by P2Flux. Point your integration here; use the test server for experiments.'
+- url: https://api-test.p2flux.com
+  description: Test - Base Sepolia (84532). Identical API against the test deployment; value moved here is faucet USDC, not real money. The interactive explorer is restricted to this server by design.
+security: []
+tags:
+- name: Subscriptions
+paths:
+  /v1/allowances/restore/submit:
+    post:
+      operationId: submitAllowanceRestore
+      summary: Carry a signed allowance change onto the chain
+      tags:
+      - Subscriptions
+      description: 'For a customer who holds no native currency. They signed two things - the allowance change and a bounded fee for the transaction that carries it - and P2Flux sends one call that does both. A change that cannot execute returns the fee, so nobody is charged for something that did not happen.
+
+
+        `allowance_units` of `"0"` REMOVES the allowance, which stops collection. That is not a revocation of the recurring authorization: only the payer''s own transaction to the recurring contract does that, and the two must be described separately to customers.
+
+
+        No gas-service fee is added here. A subscription already pays a fixed network fee on every collection.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - approve_token
+              - quote
+              - permit_signature
+              - network_fee_signature
+              properties:
+                approve_token:
+                  type: string
+                quote:
+                  type: string
+                permit_signature:
+                  type: string
+                network_fee_signature:
+                  type: string
+                allowance_units:
+                  type: string
+                  enum:
+                  - '0'
+                  description: 'Only `"0"` is accepted, and it REMOVES the allowance (stops collection - not a revocation of the recurring authorization). Absent means "restore what this subscription needs": the allowance is the subscription''s own, never a number the browser chooses.'
+                permit_nonce:
+                  type: string
+                  description: What the wallet was told the token's permit counter was. Checked against the chain before anything is sent.
+      responses:
+        '200':
+          description: Settled or confirming
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - SETTLED
+                    - SPONSORSHIP_CONFIRMING
+                  tx_hash:
+                    type: string
+                  network_fee_units:
+                    type: string
+                  allowance_units:
+                    type: string
+                  block_number:
+                    type: string
+                  native_gas_spent_wei:
+                    type: string
+        '400':
+          description: '`error` names which of: `INVALID_CANCEL_TOKEN`, `CANCEL_TOKEN_EXPIRED`, `INVALID_GAS_QUOTE`, `PAYMENT_TOKEN_GAS_UNSUPPORTED`, `INSUFFICIENT_PAYMENT_TOKEN_FOR_GAS`, `PAYMENT_TOKEN_GAS_UNAVAILABLE` (`cause: SPONSORSHIP_PAUSED` - too many sponsored transactions reverted on chain in the last hour; offer native gas and retry after `retry_after`).'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: '`PAYMENT_TOKEN_GAS_QUOTE_EXPIRED`: the price the customer accepted has lapsed; requote and ask them to sign again. A quote is also refused inside its last 20 seconds, because the token would reject it in the block that includes it.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: '`RATE_LIMITED`: this payer has reached the day''s broadcasts for this operation (`SPONSORED_ATTEMPTS_PER_PAYER_24H`, default 5). Counted only when a transaction is actually sent; refusals before that are free.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: '`SPONSORED_PERMIT_FAILED`: broadcast and refused on chain, or the permit nonce moved. Nothing moved; the customer''s fee authorization is unspent.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Error:
+      type: object
+      description: The uniform error envelope. `error` is the P2Flux code; `action` is what a merchant system should do about it, so integrations never hard-code that table themselves. Extra keys carry detail specific to the code (for example `retry_after`, `confirmations`, `as_of_block`).
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorCode'
+        action:
+          $ref: '#/components/schemas/MerchantAction'
+      additionalProperties: true
+      examples:
+      - error: INSUFFICIENT_BALANCE
+        action: CUSTOMER_ACTION_REQUIRED
+    ErrorCode:
+      type: string
+      enum:
+      - INVALID_INTENT
+      - INTENT_EXPIRED
+      - INVALID_REFERENCE
+      - INVALID_SETUP_TOKEN
+      - SETUP_TOKEN_EXPIRED
+      - INVALID_CANCEL_TOKEN
+      - CANCEL_TOKEN_EXPIRED
+      - TERMS_MISMATCH
+      - AMOUNT_OUT_OF_BOUNDS
+      - PERIOD_OUT_OF_BOUNDS
+      - PERMISSION_NOT_FOUND
+      - TRANSACTION_NOT_FOUND
+      - PERMISSION_REVOKED
+      - ALREADY_CHARGED
+      - NOT_DUE
+      - SUBSCRIPTION_EXPIRED
+      - INVALID_SIGNATURE
+      - REFUND_CONFIRMING
+      - INVALID_REFUND_TOKEN
+      - REFUND_TOKEN_EXPIRED
+      - REFUND_AMOUNT_INVALID
+      - REFUND_WRONG_MERCHANT
+      - REFUND_TRANSACTION_MISMATCH
+      - REFUND_ORIGINAL_PAYMENT_INVALID
+      - SIGNATURE_VALIDATION_TOO_EXPENSIVE
+      - UNSUPPORTED_SIGNATURE_FORMAT
+      - PAYMENT_ALREADY_PROCESSED
+      - PAYMENT_NOT_FOUND
+      - PAYMENT_RECOVERY_INCONSISTENT
+      - RECOVERY_UNAVAILABLE
+      - WRONG_SPENDER
+      - WRONG_TOKEN
+      - INVALID_EXTRA_DATA
+      - GAS_FEE_TOO_HIGH
+      - INSUFFICIENT_ALLOWANCE
+      - INSUFFICIENT_BALANCE
+      - INVALID_SUBSCRIPTION
+      - RPC_ERROR
+      - RELAYER_ERROR
+      - INTERNAL_ERROR
+      - TRANSACTION_REVERTED
+      - INVALID_REQUEST
+      - RATE_LIMITED
+      - CONCURRENCY_LIMIT
+      - GAS_TOO_HIGH
+      - GAS_QUOTE_UNAVAILABLE
+      - PAYMENT_CONFIRMING
+      - RELAYER_TX_COST_TOO_HIGH
+      - RELAYER_BUDGET_EXCEEDED
+      - RELAYER_NOT_READY
+      - RPC_BUSY
+      - PAYMENT_TOKEN_GAS_UNSUPPORTED
+      - PAYMENT_TOKEN_GAS_UNAVAILABLE
+      - PAYMENT_TOKEN_GAS_QUOTE_EXPIRED
+      - PAYMENT_TOKEN_GAS_LIMIT_EXCEEDED
+      - INVALID_GAS_QUOTE
+      - INSUFFICIENT_PAYMENT_TOKEN_FOR_GAS
+      - SPONSORED_TRANSACTION_FAILED
+      - SPONSORED_PERMIT_FAILED
+      - SPONSORSHIP_CONFIRMING
+      description: Every code this API can return. Stable identifiers - branch on these, never on the human-readable text or the HTTP status alone.
+    MerchantAction:
+      type: string
+      enum:
+      - SUCCESS
+      - WAIT
+      - RETRY_LATER
+      - CUSTOMER_ACTION_REQUIRED
+      - STOP_SUBSCRIPTION
+      - INVALID_REQUEST
+      description: 'What to do about a result.
+
+
+        - `SUCCESS` - done, nothing owed.
+
+        - `WAIT` - **the money may already have moved.** The transaction exists and has not settled to the required depth. Ask again about the SAME transaction; never start another one. This is not a failure, and showing the customer an error here tells someone who has paid that they have not.
+
+        - `RETRY_LATER` - nothing happened; the identical call is safe to repeat on your own schedule.
+
+        - `CUSTOMER_ACTION_REQUIRED` - the customer must top up or re-approve.
+
+        - `STOP_SUBSCRIPTION` - terminal; stop charging this subscription.
+
+        - `INVALID_REQUEST` - permanent. Retrying returns the same answer forever; fix the request.'
+externalDocs:
+  description: Guides, flows and worked examples
+  url: https://p2flux.com/docs/
