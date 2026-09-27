@@ -110,20 +110,6 @@ paths:
                 $ref: '#/components/schemas/Error'
 components:
   schemas:
-    Error:
-      type: object
-      description: The uniform error envelope. `error` is the P2Flux code; `action` is what a merchant system should do about it, so integrations never hard-code that table themselves. Extra keys carry detail specific to the code (for example `retry_after`, `confirmations`, `as_of_block`).
-      required:
-      - error
-      properties:
-        error:
-          $ref: '#/components/schemas/ErrorCode'
-        action:
-          $ref: '#/components/schemas/MerchantAction'
-      additionalProperties: true
-      examples:
-      - error: INSUFFICIENT_BALANCE
-        action: CUSTOMER_ACTION_REQUIRED
     ErrorCode:
       type: string
       enum:
@@ -211,6 +197,20 @@ components:
         - `STOP_SUBSCRIPTION` - terminal; stop charging this subscription.
 
         - `INVALID_REQUEST` - permanent. Retrying returns the same answer forever; fix the request.'
+    Error:
+      type: object
+      description: The uniform error envelope. `error` is the P2Flux code; `action` is what a merchant system should do about it, so integrations never hard-code that table themselves. Extra keys carry detail specific to the code (for example `retry_after`, `confirmations`, `as_of_block`).
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorCode'
+        action:
+          $ref: '#/components/schemas/MerchantAction'
+      additionalProperties: true
+      examples:
+      - error: INSUFFICIENT_BALANCE
+        action: CUSTOMER_ACTION_REQUIRED
 externalDocs:
   description: Guides, flows and worked examples
   url: https://p2flux.com/docs/

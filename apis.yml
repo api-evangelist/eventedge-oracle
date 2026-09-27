@@ -17,6 +17,7 @@ tags:
   - market-context
   - Decision Support
   - Finance
+  - A2A
 tags_raw:
   - prediction-markets
   - x402
@@ -26,12 +27,13 @@ tags_raw:
   - market-context
   - decision-support
   - finance
+  - A2A
 apis:
 - aid: eventedge-oracle:eventedge-oracle-cancellation-api
   name: EventEdge Oracle Cancellation API
   description: Unsigned calldata for the customer's own wallet to send.
   humanURL: https://edge.arakelproof.space
-  baseURL: https://edge.arakelproof.space
+  baseURL: https://api.p2flux.com
   tags:
   - Cancellation
   properties:
@@ -69,7 +71,7 @@ apis:
   name: EventEdge Oracle One-time payments API
   description: A single payment to a single recipient.
   humanURL: https://edge.arakelproof.space
-  baseURL: https://edge.arakelproof.space
+  baseURL: https://api.p2flux.com
   tags:
   - One-Time Payments
   tags_raw:
@@ -109,7 +111,7 @@ apis:
   name: EventEdge Oracle Recurring payments API
   description: Signed once by the customer, charged by your renewal job.
   humanURL: https://edge.arakelproof.space
-  baseURL: https://edge.arakelproof.space
+  baseURL: https://api.p2flux.com
   tags:
   - Recurring Payments
   tags_raw:
@@ -149,7 +151,7 @@ apis:
   name: EventEdge Oracle Refunds API
   description: A transfer from the merchant's own wallet back to the wallet that paid.
   humanURL: https://edge.arakelproof.space
-  baseURL: https://edge.arakelproof.space
+  baseURL: https://api.p2flux.com
   tags:
   - Refunds
   properties:
@@ -187,7 +189,7 @@ apis:
   name: EventEdge Oracle Service API
   description: Liveness.
   humanURL: https://edge.arakelproof.space
-  baseURL: https://edge.arakelproof.space
+  baseURL: https://api.p2flux.com
   tags:
   - Services
   tags_raw:
@@ -227,7 +229,7 @@ apis:
   name: EventEdge Oracle Subscriptions API
   description: The Subscriptions API from EventEdge Oracle — 1 operation(s) for subscriptions.
   humanURL: https://edge.arakelproof.space
-  baseURL: https://edge.arakelproof.space
+  baseURL: https://api.p2flux.com
   tags:
   - Subscription
   tags_raw:

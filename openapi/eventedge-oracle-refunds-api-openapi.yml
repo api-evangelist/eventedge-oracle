@@ -256,65 +256,6 @@ paths:
                 $ref: '#/components/schemas/Error'
 components:
   schemas:
-    Error:
-      type: object
-      description: The uniform error envelope. `error` is the P2Flux code; `action` is what a merchant system should do about it, so integrations never hard-code that table themselves. Extra keys carry detail specific to the code (for example `retry_after`, `confirmations`, `as_of_block`).
-      required:
-      - error
-      properties:
-        error:
-          $ref: '#/components/schemas/ErrorCode'
-        action:
-          $ref: '#/components/schemas/MerchantAction'
-      additionalProperties: true
-      examples:
-      - error: INSUFFICIENT_BALANCE
-        action: CUSTOMER_ACTION_REQUIRED
-    Bytes32:
-      type: string
-      pattern: ^0x[0-9a-f]{64}$
-      description: A 32-byte hex value, lowercase. Transaction hashes and references.
-      examples:
-      - '0x2d6bbc112885a6976289e599f71003f7d310e7152ebd662c6221dffd3e0da708'
-    Token:
-      type: string
-      maxLength: 8192
-      description: 'A signed P2Flux capability: payment intent (p2f1.), setup token (p2setup2.), subscription capability (p2s2.), cancel token (p2cancel1.) or refund token (p2refund1.). Opaque to the caller and unforgeable - the signature is what authorises the call. Treat it as a bearer secret: keep it server-side, never in a URL query or a log.'
-    MerchantAction:
-      type: string
-      enum:
-      - SUCCESS
-      - WAIT
-      - RETRY_LATER
-      - CUSTOMER_ACTION_REQUIRED
-      - STOP_SUBSCRIPTION
-      - INVALID_REQUEST
-      description: 'What to do about a result.
-
-
-        - `SUCCESS` - done, nothing owed.
-
-        - `WAIT` - **the money may already have moved.** The transaction exists and has not settled to the required depth. Ask again about the SAME transaction; never start another one. This is not a failure, and showing the customer an error here tells someone who has paid that they have not.
-
-        - `RETRY_LATER` - nothing happened; the identical call is safe to repeat on your own schedule.
-
-        - `CUSTOMER_ACTION_REQUIRED` - the customer must top up or re-approve.
-
-        - `STOP_SUBSCRIPTION` - terminal; stop charging this subscription.
-
-        - `INVALID_REQUEST` - permanent. Retrying returns the same answer forever; fix the request.'
-    AmountUnits:
-      type: string
-      pattern: ^\d{1,20}$
-      description: An integer count of micro-USDC (6 decimals), as a string. 2500000 is 2.50 USDC. Used wherever a decimal would invite a rounding error - notably refund amounts.
-      examples:
-      - '2500000'
-    Address:
-      type: string
-      pattern: ^0x[0-9a-fA-F]{40}$
-      description: An EVM address.
-      examples:
-      - '0xb4e43f3fBa5Add75395adAD366627E7d74141Fa9'
     ErrorCode:
       type: string
       enum:
@@ -379,6 +320,10 @@ components:
       - SPONSORED_PERMIT_FAILED
       - SPONSORSHIP_CONFIRMING
       description: Every code this API can return. Stable identifiers - branch on these, never on the human-readable text or the HTTP status alone.
+    Token:
+      type: string
+      maxLength: 8192
+      description: 'A signed P2Flux capability: payment intent (p2f1.), setup token (p2setup2.), subscription capability (p2s2.), cancel token (p2cancel1.) or refund token (p2refund1.). Opaque to the caller and unforgeable - the signature is what authorises the call. Treat it as a bearer secret: keep it server-side, never in a URL query or a log.'
     Amount:
       type: string
       pattern: ^\d{1,12}(\.\d{1,6})?$
@@ -386,6 +331,61 @@ components:
       examples:
       - '10.00'
       - '0.250000'
+    Address:
+      type: string
+      pattern: ^0x[0-9a-fA-F]{40}$
+      description: An EVM address.
+      examples:
+      - '0xb4e43f3fBa5Add75395adAD366627E7d74141Fa9'
+    AmountUnits:
+      type: string
+      pattern: ^\d{1,20}$
+      description: An integer count of micro-USDC (6 decimals), as a string. 2500000 is 2.50 USDC. Used wherever a decimal would invite a rounding error - notably refund amounts.
+      examples:
+      - '2500000'
+    Error:
+      type: object
+      description: The uniform error envelope. `error` is the P2Flux code; `action` is what a merchant system should do about it, so integrations never hard-code that table themselves. Extra keys carry detail specific to the code (for example `retry_after`, `confirmations`, `as_of_block`).
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorCode'
+        action:
+          $ref: '#/components/schemas/MerchantAction'
+      additionalProperties: true
+      examples:
+      - error: INSUFFICIENT_BALANCE
+        action: CUSTOMER_ACTION_REQUIRED
+    Bytes32:
+      type: string
+      pattern: ^0x[0-9a-f]{64}$
+      description: A 32-byte hex value, lowercase. Transaction hashes and references.
+      examples:
+      - '0x2d6bbc112885a6976289e599f71003f7d310e7152ebd662c6221dffd3e0da708'
+    MerchantAction:
+      type: string
+      enum:
+      - SUCCESS
+      - WAIT
+      - RETRY_LATER
+      - CUSTOMER_ACTION_REQUIRED
+      - STOP_SUBSCRIPTION
+      - INVALID_REQUEST
+      description: 'What to do about a result.
+
+
+        - `SUCCESS` - done, nothing owed.
+
+        - `WAIT` - **the money may already have moved.** The transaction exists and has not settled to the required depth. Ask again about the SAME transaction; never start another one. This is not a failure, and showing the customer an error here tells someone who has paid that they have not.
+
+        - `RETRY_LATER` - nothing happened; the identical call is safe to repeat on your own schedule.
+
+        - `CUSTOMER_ACTION_REQUIRED` - the customer must top up or re-approve.
+
+        - `STOP_SUBSCRIPTION` - terminal; stop charging this subscription.
+
+        - `INVALID_REQUEST` - permanent. Retrying returns the same answer forever; fix the request.'
 externalDocs:
   description: Guides, flows and worked examples
   url: https://p2flux.com/docs/
