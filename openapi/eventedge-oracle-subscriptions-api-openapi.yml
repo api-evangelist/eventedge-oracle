@@ -110,6 +110,29 @@ paths:
                 $ref: '#/components/schemas/Error'
 components:
   schemas:
+    MerchantAction:
+      type: string
+      enum:
+      - SUCCESS
+      - WAIT
+      - RETRY_LATER
+      - CUSTOMER_ACTION_REQUIRED
+      - STOP_SUBSCRIPTION
+      - INVALID_REQUEST
+      description: 'What to do about a result.
+
+
+        - `SUCCESS` - done, nothing owed.
+
+        - `WAIT` - **the money may already have moved.** The transaction exists and has not settled to the required depth. Ask again about the SAME transaction; never start another one. This is not a failure, and showing the customer an error here tells someone who has paid that they have not.
+
+        - `RETRY_LATER` - nothing happened; the identical call is safe to repeat on your own schedule.
+
+        - `CUSTOMER_ACTION_REQUIRED` - the customer must top up or re-approve.
+
+        - `STOP_SUBSCRIPTION` - terminal; stop charging this subscription.
+
+        - `INVALID_REQUEST` - permanent. Retrying returns the same answer forever; fix the request.'
     ErrorCode:
       type: string
       enum:
@@ -174,29 +197,6 @@ components:
       - SPONSORED_PERMIT_FAILED
       - SPONSORSHIP_CONFIRMING
       description: Every code this API can return. Stable identifiers - branch on these, never on the human-readable text or the HTTP status alone.
-    MerchantAction:
-      type: string
-      enum:
-      - SUCCESS
-      - WAIT
-      - RETRY_LATER
-      - CUSTOMER_ACTION_REQUIRED
-      - STOP_SUBSCRIPTION
-      - INVALID_REQUEST
-      description: 'What to do about a result.
-
-
-        - `SUCCESS` - done, nothing owed.
-
-        - `WAIT` - **the money may already have moved.** The transaction exists and has not settled to the required depth. Ask again about the SAME transaction; never start another one. This is not a failure, and showing the customer an error here tells someone who has paid that they have not.
-
-        - `RETRY_LATER` - nothing happened; the identical call is safe to repeat on your own schedule.
-
-        - `CUSTOMER_ACTION_REQUIRED` - the customer must top up or re-approve.
-
-        - `STOP_SUBSCRIPTION` - terminal; stop charging this subscription.
-
-        - `INVALID_REQUEST` - permanent. Retrying returns the same answer forever; fix the request.'
     Error:
       type: object
       description: The uniform error envelope. `error` is the P2Flux code; `action` is what a merchant system should do about it, so integrations never hard-code that table themselves. Extra keys carry detail specific to the code (for example `retry_after`, `confirmations`, `as_of_block`).
