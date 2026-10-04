@@ -573,10 +573,32 @@ paths:
                 $ref: '#/components/schemas/Error'
 components:
   schemas:
-    Token:
+    Error:
+      type: object
+      description: The uniform error envelope. `error` is the P2Flux code; `action` is what a merchant system should do about it, so integrations never hard-code that table themselves. Extra keys carry detail specific to the code (for example `retry_after`, `confirmations`, `as_of_block`).
+      required:
+      - error
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorCode'
+        action:
+          $ref: '#/components/schemas/MerchantAction'
+      additionalProperties: true
+      examples:
+      - error: INSUFFICIENT_BALANCE
+        action: CUSTOMER_ACTION_REQUIRED
+    AmountUnits:
       type: string
-      maxLength: 8192
-      description: 'A signed P2Flux capability: payment intent (p2f1.), setup token (p2setup2.), subscription capability (p2s2.), cancel token (p2cancel1.) or refund token (p2refund1.). Opaque to the caller and unforgeable - the signature is what authorises the call. Treat it as a bearer secret: keep it server-side, never in a URL query or a log.'
+      pattern: ^\d{1,20}$
+      description: An integer count of micro-USDC (6 decimals), as a string. 2500000 is 2.50 USDC. Used wherever a decimal would invite a rounding error - notably refund amounts.
+      examples:
+      - '2500000'
+    Address:
+      type: string
+      pattern: ^0x[0-9a-fA-F]{40}$
+      description: An EVM address.
+      examples:
+      - '0xb4e43f3fBa5Add75395adAD366627E7d74141Fa9'
     MerchantAction:
       type: string
       enum:
@@ -600,12 +622,12 @@ components:
         - `STOP_SUBSCRIPTION` - terminal; stop charging this subscription.
 
         - `INVALID_REQUEST` - permanent. Retrying returns the same answer forever; fix the request.'
-    AmountUnits:
+    Bytes32:
       type: string
-      pattern: ^\d{1,20}$
-      description: An integer count of micro-USDC (6 decimals), as a string. 2500000 is 2.50 USDC. Used wherever a decimal would invite a rounding error - notably refund amounts.
+      pattern: ^0x[0-9a-f]{64}$
+      description: A 32-byte hex value, lowercase. Transaction hashes and references.
       examples:
-      - '2500000'
+      - '0x2d6bbc112885a6976289e599f71003f7d310e7152ebd662c6221dffd3e0da708'
     Capabilities:
       type: object
       properties:
@@ -652,60 +674,6 @@ components:
               zero_native_revoke:
                 type: boolean
                 description: 'Always false: revoking a recurring authorization is the payer''s own transaction, by the contract''s design. Removing an allowance stops collection and is a different act.'
-    PaymentAccounting:
-      type: object
-      description: Every unit of a settled payment, read from the chain rather than recomputed from what someone said they would charge.
-      properties:
-        payment_units:
-          type: string
-        payment_fee_units:
-          type: string
-          description: The P2Flux percentage fee, taken out of the amount. The merchant's net is smaller by this.
-        network_fee_units:
-          type: string
-          description: The quoted network fee the buyer accepted. Zero in native mode.
-        fixed_network_fee_units:
-          type: string
-          description: 'The fixed network fee on a one-time payment. MERCHANT-funded: it comes out of the amount, like the percentage fee, and is paid to the gas treasury - the same arrangement a subscription has. It is never added to what the buyer is debited.'
-        merchant_net_units:
-          type: string
-        buyer_total_units:
-          type: string
-        payer:
-          type: string
-    Amount:
-      type: string
-      pattern: ^\d{1,12}(\.\d{1,6})?$
-      description: 'A USDC amount as a decimal string, up to 6 decimal places. Never a JSON number: binary floating point cannot represent most decimal prices exactly, and this is money.'
-      examples:
-      - '10.00'
-      - '0.250000'
-    Error:
-      type: object
-      description: The uniform error envelope. `error` is the P2Flux code; `action` is what a merchant system should do about it, so integrations never hard-code that table themselves. Extra keys carry detail specific to the code (for example `retry_after`, `confirmations`, `as_of_block`).
-      required:
-      - error
-      properties:
-        error:
-          $ref: '#/components/schemas/ErrorCode'
-        action:
-          $ref: '#/components/schemas/MerchantAction'
-      additionalProperties: true
-      examples:
-      - error: INSUFFICIENT_BALANCE
-        action: CUSTOMER_ACTION_REQUIRED
-    Bytes32:
-      type: string
-      pattern: ^0x[0-9a-f]{64}$
-      description: A 32-byte hex value, lowercase. Transaction hashes and references.
-      examples:
-      - '0x2d6bbc112885a6976289e599f71003f7d310e7152ebd662c6221dffd3e0da708'
-    Address:
-      type: string
-      pattern: ^0x[0-9a-fA-F]{40}$
-      description: An EVM address.
-      examples:
-      - '0xb4e43f3fBa5Add75395adAD366627E7d74141Fa9'
     ErrorCode:
       type: string
       enum:
@@ -770,6 +738,38 @@ components:
       - SPONSORED_PERMIT_FAILED
       - SPONSORSHIP_CONFIRMING
       description: Every code this API can return. Stable identifiers - branch on these, never on the human-readable text or the HTTP status alone.
+    PaymentAccounting:
+      type: object
+      description: Every unit of a settled payment, read from the chain rather than recomputed from what someone said they would charge.
+      properties:
+        payment_units:
+          type: string
+        payment_fee_units:
+          type: string
+          description: The P2Flux percentage fee, taken out of the amount. The merchant's net is smaller by this.
+        network_fee_units:
+          type: string
+          description: The quoted network fee the buyer accepted. Zero in native mode.
+        fixed_network_fee_units:
+          type: string
+          description: 'The fixed network fee on a one-time payment. MERCHANT-funded: it comes out of the amount, like the percentage fee, and is paid to the gas treasury - the same arrangement a subscription has. It is never added to what the buyer is debited.'
+        merchant_net_units:
+          type: string
+        buyer_total_units:
+          type: string
+        payer:
+          type: string
+    Amount:
+      type: string
+      pattern: ^\d{1,12}(\.\d{1,6})?$
+      description: 'A USDC amount as a decimal string, up to 6 decimal places. Never a JSON number: binary floating point cannot represent most decimal prices exactly, and this is money.'
+      examples:
+      - '10.00'
+      - '0.250000'
+    Token:
+      type: string
+      maxLength: 8192
+      description: 'A signed P2Flux capability: payment intent (p2f1.), setup token (p2setup2.), subscription capability (p2s2.), cancel token (p2cancel1.) or refund token (p2refund1.). Opaque to the caller and unforgeable - the signature is what authorises the call. Treat it as a bearer secret: keep it server-side, never in a URL query or a log.'
 externalDocs:
   description: Guides, flows and worked examples
   url: https://p2flux.com/docs/
