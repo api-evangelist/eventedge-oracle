@@ -266,6 +266,9 @@ apis:
   - type: Pricing
     url: https://edge.arakelproof.space/v1/catalog
 common:
+  - type: CapabilityMap
+    url: capabilities/eventedge-oracle-capability-edges.yml
+    name: EventEdge Oracle Business Capability Map
   - type: MCPServer
     url: https://edge.arakelproof.space/mcp
   - type: AgentSkill

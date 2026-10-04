@@ -1,0 +1,36 @@
+slug: eventedge-oracle
+provider: EventEdge Oracle
+generated_by: planning/capability-mapping/scripts/classify_capabilities.py
+model: claude-opus-5
+frame:
+- Software & Technology
+min_confidence: 0.7
+capability_model:
+  source: https://github.com/vincentmakes/turbo-ea-capabilities
+  license: CC-BY-4.0
+  attribution: Turbo EA Capabilities by Vincent Verdet — Turbo EA, https://github.com/vincentmakes/turbo-ea-capabilities,
+    CC BY 4.0
+  notice: NOTICE
+edge_count: 2
+edges:
+- tag: One-Time Payments
+  spec_file: eventedge-oracle-one-time-payments-api-openapi.yml
+  capability_id: BC-4250.40
+  capability_id_l1: BC-4250
+  capability_name: Payment Collection & Dunning
+  confidence: 0.72
+  evidence: POST /v1/payments  createPayment  Create a one-time payment intent; POST /v1/payments/verify  verifyPayment  Verify
+    a payment against the chain
+  reason: Operations create, verify and settle one-time payment intents on-chain — payment authorisation
+    and collection. Mapped to Payment Collection & Dunning as the closest payment-execution capability,
+    though this is a generic payments rail rather than subscription dunning, hence moderate confidence.
+- tag: Recurring Payments
+  spec_file: eventedge-oracle-recurring-payments-api-openapi.yml
+  capability_id: BC-4250.40
+  capability_id_l1: BC-4250
+  capability_name: Payment Collection & Dunning
+  confidence: 0.7
+  evidence: POST /v1/charges  charge  Execute one recurring charge; POST /v1/subscriptions  createSubscription  Create
+    subscription terms and a setup token
+  reason: Surface executes recurring charges against subscription terms and allowances — recurring payment
+    collection. Could also touch subscription contracting, but the dominant operations are charging/collection.
