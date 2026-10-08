@@ -266,6 +266,10 @@ apis:
   - type: Pricing
     url: https://edge.arakelproof.space/v1/catalog
 common:
+  - type: Plans
+    url: plans/eventedge-oracle-plans-pricing.yml
+  - type: RateLimits
+    url: rate-limits/eventedge-oracle-rate-limits.yml
   - type: CapabilityMap
     url: capabilities/eventedge-oracle-capability-edges.yml
     name: EventEdge Oracle Business Capability Map
